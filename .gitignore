@@ -1,1 +1,19 @@
-.venv
+# 1. Bỏ qua thư mục môi trường ảo (Cái này quan trọng nhất để không up hàng ngàn file thư viện lên)
+.venv/
+venv/
+env/
+
+# 2. Bỏ qua các file cache do Python tự sinh ra (không cần thiết lưu trữ)
+__pycache__/
+*.pyc
+
+# 3. Bỏ qua file chứa biến môi trường/mật khẩu (BẢO MẬT: tuyệt đối không được xóa dòng này nếu dùng .env)
+.env
+
+# 4. Bỏ qua file cấu hình của Editor (VS Code, PyCharm...)
+.vscode/
+.idea/
+
+# 5. File rác của hệ điều hành (Mac/Windows)
+.DS_Store
+Thumbs.db

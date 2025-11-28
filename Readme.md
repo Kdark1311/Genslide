@@ -2,16 +2,6 @@
 
 **Development of a Real-time Voice-to-Slide Presentation System using Generative AI with Streaming UI and Voice-based Dual-Mode Interaction**
 
----
-
-**Sinh viên thực hiện:** [Tên của bạn]  
-**MSSV:** [Mã số sinh viên]  
-**Giảng viên hướng dẫn:** [Tên giảng viên]  
-**Khoa/Bộ môn:** [Tên khoa]  
-**Ngày nộp:** [Ngày/Tháng/Năm]
-
----
-
 ## MỤC LỤC
 
 1. [Giới thiệu](#1-giới-thiệu)
@@ -43,7 +33,7 @@ Khi soạn slide thủ công, người dùng phải:
 
 **Hậu quả:** 
 - Chất lượng nội dung giảm
-- Thời gian tăng (trung bình 3-5 phút/slide)
+- Thời gian tăng
 - Stress và mệt mỏi
 
 #### Vấn đề 2: Công cụ AI thiếu tính tương tác thời gian thực
@@ -105,8 +95,8 @@ Hiện nay chưa có nhiều nghiên cứu học thuật về:
 
 Một công cụ lý tưởng cần:
 1. ⚡ **Phản hồi tức thì**: Nội dung xuất hiện < 2 giây
-2. 🎬 **Streaming UI**: Content "mọc lên" dần (như Gamma.app)
-3. 🗣️ **Voice-only**: 100% giọng nói, không cần tay
+2. 🎬 **Streaming UI**: Content xuất hiện dần (như Gamma.app)
+3. 🗣️ **Voice-only**: 100% giọng nói, không cần sử dụng tay để chỉnh sửa
 4. 🎯 **Dual-mode**: Sáng tạo tự nhiên + Chỉnh sửa chính xác
 5. 📊 **Chất lượng cao**: Comparable với AI tools hiện có
 
@@ -135,12 +125,12 @@ Một công cụ lý tưởng cần:
   - System parse commands và execute
   - Context-aware ("cái đó", "slide này")
 
-- **Mode Switching**: Mượt mà bằng button click
+- **Mode Switching**: Chuyển đổi bằng button click
 
 #### Mục tiêu 3: Streaming UI Experience
 - Nội dung xuất hiện **dần dần** (Title → Bullet 1 → Bullet 2...)
 - **Không** chờ đợi rồi "bật lên" (wait-then-pop)
-- Animations: Typewriter effect, Fade-in, Slide-up
+- Animations: Typewriter effect, Fade-in, Slide-up, ...
 - Maintain 60 FPS performance
 
 #### Mục tiêu 4: Quality Maintenance
@@ -160,7 +150,7 @@ Một công cụ lý tưởng cần:
 
 ### 1.4. Câu hỏi nghiên cứu
 
-#### RQ1: Real-time Speech-to-Slide Streaming Alignment ⭐⭐⭐
+#### RQ1: Real-time Speech-to-Slide Streaming Alignment 
 > **"Làm thế nào đồng bộ hóa continuous speech stream với incremental slide rendering để tạo cảm giác 'đang được tạo ra' thay vì 'đợi xong xuất hiện'?"**
 
 **Techniques cần nghiên cứu:**
@@ -182,7 +172,7 @@ Một công cụ lý tưởng cần:
 
 ---
 
-#### RQ2: Incremental JSON Parsing for Streaming LLM ⭐⭐⭐
+#### RQ2: Incremental JSON Parsing for Streaming LLM 
 > **"Làm thế nào parse và render JSON structure khi nó đang được generate token-by-token từ LLM streaming API?"**
 
 **Research Gap:**
@@ -217,7 +207,7 @@ Token stream: ' trong Y tế",' → Complete: {title: "AI trong Y tế"}
 
 ---
 
-#### RQ3: Incremental DOM Update Optimization ⭐⭐
+#### RQ3: Incremental DOM Update Optimization 
 > **"Chiến lược nào cho incremental DOM updates mang lại trải nghiệm smooth nhất mà không gây flicker hay performance bottleneck?"**
 
 **Approaches cần so sánh:**
@@ -243,7 +233,7 @@ Token stream: ' trong Y tế",' → Complete: {title: "AI trong Y tế"}
 
 ---
 
-#### RQ4: Dual-Mode Voice Interaction Design ⭐⭐⭐
+#### RQ4: Dual-Mode Voice Interaction Design 
 > **"Làm thế nào thiết kế interaction pattern cho phép user seamlessly switch giữa Brainstorming Mode (generative) và Editing Mode (imperative) chỉ bằng giọng nói?"**
 
 **Research Gap:**
@@ -287,7 +277,7 @@ Token stream: ' trong Y tế",' → Complete: {title: "AI trong Y tế"}
 
 ---
 
-#### RQ5: Optimal Streaming Update Frequency ⭐⭐
+#### RQ5: Optimal Streaming Update Frequency 
 > **"Tần suất cập nhật UI bao nhiêu lần/giây là tối ưu cho readability và perceived responsiveness?"**
 
 **Hypothesis:**
@@ -319,7 +309,7 @@ Evidence-based guideline cho streaming UI design, generalizable beyond presentat
 
 ---
 
-#### RQ6: Streaming vs Batch Quality Trade-off ⭐⭐
+#### RQ6: Streaming vs Batch Quality Trade-off 
 > **"Có sự trade-off nào giữa streaming mode (real-time) và batch mode (wait for complete) về chất lượng nội dung không?"**
 
 **Hypothesis:**
@@ -403,7 +393,7 @@ C (S+Polish)| 8.2     | 3s      | 50% ← BEST!
 
 ### 2.2. State-of-the-Art Academic Research (9 Papers)
 
-#### Paper 1: PASS (2025) ⭐⭐⭐
+#### Paper 1: PASS (2025) 
 **Liu et al. "Presentation Automation for Slide Generation and Speech"**
 
 **Key Contributions:**
@@ -426,7 +416,7 @@ C (S+Polish)| 8.2     | 3s      | 50% ← BEST!
 
 ---
 
-#### Paper 2: PresentAgent (2025) ⭐⭐⭐
+#### Paper 2: PresentAgent (2025) 
 **Zhang et al. "Multimodal Agent for Presentation Video Generation"**
 
 **Key Contributions:**
@@ -450,7 +440,7 @@ C (S+Polish)| 8.2     | 3s      | 50% ← BEST!
 
 ---
 
-#### Paper 3: U2 Whisper (2025) ⭐⭐⭐
+#### Paper 3: U2 Whisper (2025) 
 **Li et al. "Adapting Whisper for Streaming ASR via Two-Pass Decoding"**
 
 **Key Contributions:**
@@ -472,7 +462,7 @@ C (S+Polish)| 8.2     | 3s      | 50% ← BEST!
 
 ---
 
-#### Paper 4: WhisperX (2023) ⭐⭐⭐
+#### Paper 4: WhisperX (2023) 
 **Bain et al. "Word-level Timestamps & Diarization"**
 
 **Key Contributions:**
@@ -493,7 +483,7 @@ C (S+Polish)| 8.2     | 3s      | 50% ← BEST!
 
 ---
 
-#### Paper 5: SlideSpeech (2023) ⭐⭐⭐
+#### Paper 5: SlideSpeech (2023) 
 **Xu et al. "Large-Scale Slide-Enriched Audio-Visual Corpus"**
 
 **Key Contributions:**
@@ -514,7 +504,7 @@ C (S+Polish)| 8.2     | 3s      | 50% ← BEST!
 
 ---
 
-#### Paper 6: Few-shot Style Transfer (2022) ⭐⭐
+#### Paper 6: Few-shot Style Transfer (2022) 
 **Krishnan et al. "Few-shot Style Transfer for Multilingual Settings"**
 
 **Key Contributions:**
@@ -534,7 +524,7 @@ C (S+Polish)| 8.2     | 3s      | 50% ← BEST!
 
 ---
 
-#### Paper 7-9: Supporting Papers ⭐
+#### Paper 7-9: Supporting Papers 
 
 **LayoutLMv3** (Huang et al. 2022):
 - Joint text-layout understanding
@@ -615,33 +605,33 @@ C (S+Polish)| 8.2     | 3s      | 50% ← BEST!
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                      GENSLIDE ARCHITECTURE                           │
-│                   (True Real-time Streaming)                         │
+│                      GENSLIDE ARCHITECTURE                          │ 
+│                   (True Real-time Streaming)                        │
 ├─────────────────────────────────────────────────────────────────────┤
-│                                                                      │
-│  ┌──────────────┐   CONTINUOUS    ┌──────────────┐   CONTINUOUS    │
+│                                                                     │
+│  ┌──────────────┐   CONTINUOUS    ┌──────────────┐   CONTINUOUS     │
 │  │   SPEECH     │═══ STREAM 1 ═══▶│   LANGUAGE   │═══ STREAM 2 ═══▶│
-│  │   LAYER      │                  │   LAYER      │                  │
-│  └──────────────┘                  └──────────────┘                  │
-│       ║                                   ║                          │
-│       ║ Partial Transcripts               ║ Token-by-Token           │
-│       ║ (every 200-300ms)                 ║ JSON Fragments           │
-│       ▼                                   ▼                          │
-│                                                                      │
+│  │   LAYER      │                  │   LAYER      │                 │
+│  └──────────────┘                  └──────────────┘                 │
+│       ║                                   ║                         │
+│       ║ Partial Transcripts               ║ Token-by-Token          │
+│       ║ (every 200-300ms)                 ║ JSON Fragments          │
+│       ▼                                   ▼                         │
+│                                                                     │
 │  ┌──────────────┐                  ┌──────────────┐                 │
-│  │   RENDER     │◀═══ STREAM 3 ════│    STATE     │                 │
+│  │   RENDER     │◀═══ STREAM 3 ════│    STATE     |                 |
 │  │   LAYER      │                  │   MANAGER    │                 │
 │  └──────────────┘                  └──────────────┘                 │
-│       │                                   │                          │
-│       │ Incremental DOM Updates           │ Mode Switching           │
+│       │                                   │                         │ 
+│       │ Incremental DOM Updates           │ Mode Switching          │
 │       │ (Title → Bullets → Polish)        │ (Brainstorm ↔ Edit)     │
-│       ▼                                   ▼                          │
-│                                                                      │
-│  ┌─────────────────────────────────────────────────────────────┐   │
+│       ▼                                   ▼                         │
+│                                                                     │
+│  ┌─────────────────────────────────────────────────────────────┐    │
 │  │       USER SEES CONTENT APPEARING GRADUALLY                  │   │
 │  │   (Like watching someone type, NOT waiting for load)         │   │
-│  └─────────────────────────────────────────────────────────────┘   │
-│                                                                      │
+│  └─────────────────────────────────────────────────────────────┘    │
+│                                                                     │
 └─────────────────────────────────────────────────────────────────────┘
 
 KEY FEATURES:
