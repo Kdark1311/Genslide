@@ -600,7 +600,8 @@ C (S+Polish)| 8.2     | 3s      | 50% ← BEST!
 ---
 
 ### 3.2. Kiến trúc hệ thống
-
+#### 3.2.1. System Overview
+```
 ┌────────────────────────────────────────────────────────────────────────┐
 │                      GENSLIDE ARCHITECTURE                              │ 
 │                   (True Real-time Streaming)                            │
@@ -665,7 +666,7 @@ STREAM 2: Language Layer → Render Layer (JSON fragments)
 State Manager = INSIDE Language Layer (quản lý modes)
 
 ---
-
+```
 #### 3.2.2. Component 1: Speech Layer (Streaming ASR)
 
 **Mục đích:** Chuyển đổi speech thành text với latency < 2s và continuous updates
