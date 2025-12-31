@@ -601,50 +601,68 @@ C (S+Polish)| 8.2     | 3s      | 50% ← BEST!
 
 ### 3.2. Kiến trúc hệ thống
 
-#### 3.2.1. System Overview
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                      GENSLIDE ARCHITECTURE                          │ 
-│                   (True Real-time Streaming)                        │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                     │
-│  ┌──────────────┐   CONTINUOUS    ┌──────────────┐   CONTINUOUS     │
-│  │   SPEECH     │═══ STREAM 1 ═══▶│   LANGUAGE   │═══ STREAM 2 ═══▶│
-│  │   LAYER      │                  │   LAYER      │                 │
-│  └──────────────┘                  └──────────────┘                 │
-│       ║                                   ║                         │
-│       ║ Partial Transcripts               ║ Token-by-Token          │
-│       ║ (every 200-300ms)                 ║ JSON Fragments          │
-│       ▼                                   ▼                         │
-│                                                                     │
-│  ┌──────────────┐                  ┌──────────────┐                 │
-│  │   RENDER     │◀═══ STREAM 3 ════│    STATE     |                 |
-│  │   LAYER      │                  │   MANAGER    │                 │
-│  └──────────────┘                  └──────────────┘                 │
-│       │                                   │                         │ 
-│       │ Incremental DOM Updates           │ Mode Switching          │
-│       │ (Title → Bullets → Polish)        │ (Brainstorm ↔ Edit)     │
-│       ▼                                   ▼                         │
-│                                                                     │
-│  ┌─────────────────────────────────────────────────────────────┐    │
-│  │       USER SEES CONTENT APPEARING GRADUALLY                  │   │
-│  │   (Like watching someone type, NOT waiting for load)         │   │
-│  └─────────────────────────────────────────────────────────────┘    │
-│                                                                     │
-└─────────────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────┐
+│                      GENSLIDE ARCHITECTURE                              │ 
+│                   (True Real-time Streaming)                            │
+├────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│  ┌──────────────┐           ┌─────────────────────────┐                │
+│  │   SPEECH     │═STREAM 1═▶│   LANGUAGE LAYER        │                │
+│  │   LAYER      │           │  ┌───────────────────┐  │                │
+│  │              │           │  │  State Manager    │  │                │
+│  │ • VAD        │           │  │  • BRAINSTORM     │  │                │
+│  │ • Two-Pass   │           │  │  • EDIT           │  │                │
+│  │ • Timestamps │           │  └───────────────────┘  │                │
+│  └──────────────┘           │  ┌───────────────────┐  │                │
+│       ║                     │  │  Intent Classifier│  │                │
+│       ║ Partial             │  └───────────────────┘  │                │
+│       ║ Transcripts         │  ┌───────────────────┐  │   CONTINUOUS   │
+│       ║ (300ms)             │  │  Multi-LLM Router │  │                │
+│       ▼                     │  └───────────────────┘  │                │
+│   UI Preview                │  ┌───────────────────┐  │                │
+│   (gray text)               │  │  Streaming LLM    │  │═══STREAM 2═══▶ │
+│                             │  └───────────────────┘  │                │
+│                             │  ┌───────────────────┐  │                │
+│                             │  │  JSON Parser      │  │                │
+│                             │  │  (Incremental)    │  │                │
+│                             │  └───────────────────┘  │                │
+│                             └─────────────────────────┘                │
+│                                          ║                              │
+│                                          ║ Token-by-Token               │
+│                                          ║ JSON Fragments               │
+│                                          ▼                              │
+│                             ┌─────────────────────────┐                 │
+│                             │   RENDER LAYER          │                 │
+│                             │                         │                 │
+│                             │  • Virtual DOM          │                 │
+│                             │  • Diff Algorithm       │                 │
+│                             │  • Animations           │                 │
+│                             │  • DOM Patcher          │                 │
+│                             └─────────────────────────┘                 │
+│                                          │                              │ 
+│                                          │ Incremental DOM Updates      │
+│                                          │ (Title → Bullets → Polish)   │
+│                                          ▼                              │
+│                                                                         │
+│  ┌──────────────────────────────────────────────────────────────────┐  │
+│  │       👁️ USER SEES CONTENT APPEARING GRADUALLY                   │  │
+│  │   (Like watching someone type, NOT waiting for load)             │  │
+│  │                                                                  │  │
+│  │   ┌────────────────────────────┐                                │  │
+│  │   │  AI trong Y tế             │  (t=2.1s - Title appears)      │  │
+│  │   │  • Chẩn đoán nhanh         │  (t=3.0s - Bullet 1 fades in) │  │
+│  │   │  • Điều trị cá nhân hóa    │  (t=4.0s - Bullet 2 fades in) │  │
+│  │   └────────────────────────────┘                                │  │
+│  └──────────────────────────────────────────────────────────────────┘  │
+│                                                                         │
+└────────────────────────────────────────────────────────────────────────┘
 
 KEY FEATURES:
 ═══ = Continuous streaming (không phải wait-then-process)
-STREAM 1-3 = Three concurrent data streams
-STATE MANAGER = Mode switching logic (Brainstorm ↔ Edit)
-```
-
-**Giải thích:**
-- **Double lines (═══)**: Dòng chảy liên tục, không phải single arrow
-- **3 Streams chạy song song**: Speech, Language, Render overlap nhau
-- **State Manager**: Component mới để quản lý dual-mode
-- **Incremental Updates**: Render từng phần, không đợi full JSON
+STREAM 1: Speech Layer → Language Layer (text transcripts)
+STREAM 2: Language Layer → Render Layer (JSON fragments)
+║ (double vertical) = Preview path (Speech → UI directly for gray text)
+State Manager = INSIDE Language Layer (quản lý modes)
 
 ---
 
@@ -706,31 +724,76 @@ Mỗi window được xử lý SONG SONG → Partial results liên tục
 
 **B. Two-Pass Decoding**
 
-**Pass 1 - CTC Branch (Fast Preview):**
-- Latency: 200-300ms
-- Accuracy: Lower (có thể thiếu dấu, viết hoa sai)
-- Purpose: Cho user biết "system đang nghe"
-- Output: Partial hypothesis
-- Display: Preview text (màu xám)
+Pass 1 - CTC Branch (Fast Preview):
 
-**Pass 2 - Attention Branch (Accurate Final):**
-- Latency: 1.5-2s (sau khi detect utterance end)
-- Accuracy: High (đúng dấu, viết hoa, ngữ pháp)
-- Purpose: Quality transcript để send cho LLM
-- Output: Final transcript + word timestamps
-- Display: Replace preview → Final text (màu đen)
+Latency: 200-300ms (sau khi nhận đủ 640ms audio chunk)
+Accuracy: Lower (có thể thiếu dấu, viết hoa sai)
+Purpose: Cho user biết "system đang nghe"
+Output: Partial hypothesis
+Display: Preview text (màu xám)
+Frequency: Cập nhật liên tục mỗi 300ms
 
-**Timeline Example:**
-```
-t=0.0s:   User starts: "Hôm nay..."
-t=0.3s:   Pass 1 shows: "hôm nay" (lowercase, no diacritics)
-t=0.6s:   Pass 1 updates: "hôm nay tôi"
-t=1.0s:   Pass 1 updates: "hôm nay tôi muốn"
-t=1.5s:   User pauses
-t=2.0s:   VAD detects end
-t=3.5s:   Pass 2 finalizes: "Hôm nay tôi muốn nói về AI"
-                            (Proper capitalization, diacritics)
-```
+Pass 2 - Attention Branch (Accurate Final):
+
+Latency: 1.5s (sau khi VAD detect utterance end)
+Accuracy: High (đúng dấu, viết hoa, ngữ pháp)
+Purpose: Quality transcript để send cho LLM
+Output: Final transcript + word timestamps
+Display: Replace preview → Final text (màu đen)
+Trigger: Sentence boundary detected
+
+Timeline Example (ĐỒNG BỘ):
+t=0.0s:   User starts: "Hôm nay tôi muốn nói về AI"
+          [VAD] Speech detected
+          [Sliding Window] Bắt đầu buffer audio
+
+t=0.3s:   [Window 1 complete: 640ms audio]
+          [Pass 1 - CTC] Fast decode
+          Output: "hom nay" (lowercase, no diacritics)
+          [UI] Display preview (gray): "hom nay"
+
+t=0.6s:   [Window 2 complete]
+          [Pass 1 - CTC] Fast decode
+          Output: "hom nay toi"
+          [UI] Update preview (gray): "hom nay toi"
+
+t=1.0s:   [Window 3 complete]
+          [Pass 1 - CTC] Fast decode
+          Output: "hom nay toi muon"
+          [UI] Update preview (gray): "hom nay toi muon"
+
+t=1.5s:   User pauses (>500ms silence)
+          [VAD] Analyzing pause...
+          [Prosody] Falling pitch detected
+          [Linguistic] Complete phrase pattern
+
+t=1.8s:   [VAD] Utterance end confirmed (combined confidence > 0.75)
+          [Pass 2 - Attention] Triggered!
+          Processing full audio buffer (0.0s - 1.5s)
+
+t=3.3s:   [Pass 2 - Attention] Complete! (1.8s + 1.5s = 3.3s)
+          Output: "Hôm nay tôi muốn nói về AI trong y tế."
+          + Word timestamps: [{word: "Hôm", start: 0.0, end: 0.2}, ...]
+          [UI] Replace preview → Final text (black)
+          [Send to Language Layer] Final transcript ready
+Tóm tắt timing:
+
+Pass 1 latency: 300ms (per window)
+Pass 2 latency: 1.5s (after utterance end)
+Total latency (speech start → final text): ~3.3s
+
+Audio duration: 1.5s
+VAD decision: 0.3s
+Pass 2 processing: 1.5s
+Total: 3.3s
+
+
+
+Lưu ý quan trọng:
+
+Pass 1 chạy liên tục mỗi 300ms (user thấy preview ngay)
+Pass 2 chỉ chạy một lần khi sentence kết thúc
+User KHÔNG ĐỢI 3.3s - họ thấy preview text từ 0.3s!
 
 **C. Advanced VAD (Voice Activity Detection)**
 
@@ -770,13 +833,262 @@ Output: [
 
 **Example:**
 ```
-User nói: "AI trong y tế rất QUAN TRỌNG"
-         ├─ "AI": 2.3-2.6s (300ms - normal)
-         ├─ "trong": 2.6-2.9s (300ms)
-         ├─ "y tế": 2.9-3.3s (400ms)
-         └─ "QUAN TRỌNG": 3.3-4.5s (1200ms - EMPHASIZED!)
+═══════════════════════════════════════════════════════════════════════
+COMPLETE USER INTERACTION TIMELINE
+═══════════════════════════════════════════════════════════════════════
 
-Detection: Duration > 2x average → Make "QUAN TRỌNG" bold in slide
+t=0.0s  🎤 User (Brainstorm Mode): Bắt đầu nói "Hôm nay tôi muốn nói về AI"
+        
+        [Speech Layer - VAD]
+        - Speech detected → Start recording
+        - Sliding window buffer active
+
+t=0.3s  [Speech Layer - Pass 1 CTC]
+        - Window 1 (640ms) complete
+        - Fast decode: "hom nay"
+        
+        [UI - Preview]
+        👁️ USER SEES: "hom nay" (gray text appears)
+        ⏱️ TTFC (Time to First Content) = 0.3s ✓
+
+t=0.6s  [Speech Layer - Pass 1 CTC]
+        - Window 2 complete
+        - Fast decode: "hom nay toi"
+        
+        [UI - Preview Update]
+        👁️ USER SEES: "hom nay toi" (gray text updates)
+
+t=1.0s  [Speech Layer - Pass 1 CTC]
+        - Window 3 complete
+        - Fast decode: "hom nay toi muon"
+        
+        [UI - Preview Update]
+        👁️ USER SEES: "hom nay toi muon" (gray text updates)
+
+t=1.5s  [User pauses speaking]
+        
+        [Speech Layer - VAD]
+        - Acoustic: Pause > 500ms (confidence 0.7)
+        - Prosody: Falling pitch (confidence 0.8)
+        - Linguistic: Complete phrase (confidence 0.9)
+        - Combined: (0.7×0.3 + 0.8×0.3 + 0.9×0.4) = 0.81 > 0.75 ✓
+        
+        [VAD Decision]
+        - Utterance end detected!
+
+t=1.8s  [Speech Layer - Pass 2 Attention]
+        - Triggered!
+        - Processing full audio (0.0s - 1.5s)
+
+t=3.3s  [Speech Layer - Pass 2 Complete]
+        - Final: "Hôm nay tôi muốn nói về AI trong y tế."
+        - Word timestamps: Available
+        
+        [UI - Final Text]
+        👁️ USER SEES: Preview (gray) → Final (black)
+        
+        ══════════════════════════════════════════════════════════
+        STREAM 1 COMPLETE → TRIGGER LANGUAGE LAYER
+        ══════════════════════════════════════════════════════════
+
+t=3.3s  [Language Layer - State Manager]
+        - Current mode: BRAINSTORM
+        - Load prompt template
+
+t=3.4s  [Language Layer - Intent Classifier]
+        - Input: "Hôm nay tôi muốn nói về AI trong y tế."
+        - Analysis: Generative intent (not command)
+        - Intent: "create_slide"
+
+t=3.5s  [Language Layer - Multi-LLM Router]
+        - Complexity: len = 9 words → "simple"
+        - Route to: Gemini 2.5 Flash (fastest)
+
+t=3.5s  [Language Layer - Streaming LLM API]
+        - Prompt: BRAINSTORM_MODE_TEMPLATE
+        - Call: gemini.generate_content(stream=True)
+        - API latency: ~200ms to first token
+
+t=3.7s  [LLM Token Stream Begins]
+        Token: '{'
+        [JSON Parser] State: INIT → IN_OBJECT
+        Renderable: NO
+
+t=3.8s  Token: '"title"'
+        [JSON Parser] State: IN_OBJECT → IN_TITLE
+        Renderable: NO
+
+t=3.9s  Token: ':'
+        [JSON Parser] State: IN_TITLE (waiting for value)
+        Renderable: NO
+
+t=4.0s  Token: '"AI'
+        [JSON Parser] State: IN_TITLE (reading value)
+        Buffer: '"AI'
+        Renderable: NO
+
+t=4.1s  Token: ' trong'
+        [JSON Parser] Buffer: '"AI trong'
+        Renderable: NO
+
+t=4.2s  Token: ' Y'
+        [JSON Parser] Buffer: '"AI trong Y'
+        Renderable: NO
+
+t=4.3s  Token: ' tế"'
+        [JSON Parser] State: IN_TITLE → TITLE_COMPLETE ✓
+        Buffer: '"AI trong Y tế"'
+        Extracted: {title: "AI trong Y tế"}
+        Renderable: YES! 🎉
+        
+        ══════════════════════════════════════════════════════════
+        STREAM 2 FIRST OUTPUT → TRIGGER RENDER LAYER
+        ══════════════════════════════════════════════════════════
+
+t=4.3s  [Render Layer - Virtual DOM]
+        - Previous state: null
+        - New state: {title: "AI trong Y tế"}
+        - Diff: ADD_TITLE
+
+t=4.3s  [Render Layer - Animation Controller]
+        - Apply: Typewriter effect (50ms/char)
+        - Duration: 17 chars × 50ms = 850ms
+
+t=4.3s  [Render Layer - DOM Patcher]
+        - Create <h1> element
+        - Append to slide container
+        
+        👁️ USER SEES: Title starts appearing letter-by-letter!
+        "A" → "AI" → "AI " → "AI t" → ...
+        
+        ⏱️ Time from speech start: 4.3s
+        ⏱️ Time from speech end: 1.0s ✓
+
+t=5.2s  [Animation Complete]
+        👁️ USER SEES: "AI trong Y tế" (full title visible)
+
+t=5.3s  [LLM continues...]
+        Token: ','
+        [JSON Parser] State: TITLE_COMPLETE (waiting for next field)
+
+t=5.4s  Token: '"bullets"'
+        [JSON Parser] State: TITLE_COMPLETE → IN_BULLETS
+
+t=5.5s  Token: ':['
+        [JSON Parser] State: IN_BULLETS (array started)
+        Result: {title: "...", bullets: []}
+
+t=5.6s  Token: '"Chẩn'
+        [JSON Parser] State: IN_BULLETS (reading bullet 1)
+        Buffer: '"Chẩn'
+
+t=5.7s  Token: ' đoán'
+        Buffer: '"Chẩn đoán'
+
+t=5.8s  Token: ' bệnh'
+        Buffer: '"Chẩn đoán bệnh'
+
+t=5.9s  Token: ' nhanh"'
+        [JSON Parser] State: BULLET_COMPLETE ✓
+        Result: {
+          title: "AI trong Y tế",
+          bullets: ["Chẩn đoán bệnh nhanh"]
+        }
+        Renderable: YES! 🎉
+
+t=5.9s  [Render Layer]
+        - Diff: ADD_BULLET (index 0)
+        - Animation: Fade-in (300ms)
+        
+        👁️ USER SEES: First bullet fades in!
+        
+        ⏱️ Time from speech start: 5.9s
+        ⏱️ Time from speech end: 2.6s
+
+t=6.2s  [Bullet 1 animation complete]
+        👁️ USER SEES: "• Chẩn đoán bệnh nhanh" (fully visible)
+
+t=6.3s  [LLM continues...]
+        Token: ','
+        [JSON Parser] State: BULLET_COMPLETE → IN_BULLETS (next bullet)
+
+t=6.4s  Token: '"Điều'
+        Buffer: '"Điều'
+
+t=6.8s  Token: ' trị cá nhân hóa"'
+        [JSON Parser] State: BULLET_COMPLETE ✓
+        Result: {
+          title: "AI trong Y tế",
+          bullets: [
+            "Chẩn đoán bệnh nhanh",
+            "Điều trị cá nhân hóa"
+          ]
+        }
+        Renderable: YES! 🎉
+
+t=6.8s  [Render Layer]
+        - Diff: ADD_BULLET (index 1)
+        - Animation: Fade-in (300ms)
+        
+        👁️ USER SEES: Second bullet fades in!
+
+t=7.1s  [Bullet 2 animation complete]
+        👁️ USER SEES: Complete slide!
+        
+        ┌────────────────────────────┐
+        │  AI trong Y tế             │
+        │  • Chẩn đoán bệnh nhanh    │
+        │  • Điều trị cá nhân hóa    │
+        └────────────────────────────┘
+        
+        ⏱️ TOTAL TIME (speech start → complete slide): 7.1s ✓
+        ⏱️ TTFC (Time to First Content): 0.3s (preview) / 4.3s (final) ✓
+
+═══════════════════════════════════════════════════════════════════════
+
+t=10.0s 👆 User clicks [Edit Mode] button
+        
+        [State Manager]
+        - BRAINSTORM → EDIT
+        - Update UI indicator: "EDIT MODE ✏️"
+        - Update LLM prompt template: EDIT_MODE_TEMPLATE
+
+t=12.0s 🎤 User (Edit Mode): "Sửa tiêu đề thành AI và Machine Learning"
+        
+        [Speech Layer - Same process as before]
+        t=12.3s: Preview "sua tieu de..."
+        t=14.3s: Final "Sửa tiêu đề thành AI và Machine Learning"
+        
+        [Language Layer - Intent Classifier]
+        - Mode: EDIT (different prompt!)
+        - Intent: "edit_title"
+        - Parse: {
+            command: "edit_title",
+            target: {slide_index: 0},
+            new_value: "AI và Machine Learning"
+          }
+
+t=14.5s [Render Layer]
+        - Diff: MODIFY_TITLE
+        - Animation: Fade out old → Fade in new (500ms)
+        
+        👁️ USER SEES: Title changes smoothly!
+        "AI trong Y tế" → "AI và Machine Learning"
+
+═══════════════════════════════════════════════════════════════════════
+END OF TIMELINE
+═══════════════════════════════════════════════════════════════════════
+
+Key Timing Summary:
+
+Preview text: 0.3s (first feedback)
+Final transcript: 3.3s (after speech end)
+First content (title): 4.3s (1s after speech end)
+Complete slide: 7.1s (total)
+
+Comparison with batch mode:
+Batch (Gamma.ai):  30-60s wait → Pop up complete
+GenSlide Streaming: 0.3s preview → 4.3s title → 7.1s complete
 ```
 
 **Models:**
